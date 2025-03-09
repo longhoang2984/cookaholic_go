@@ -42,3 +42,4 @@ debug/
 # Local development files
 tmp/
 temp/ 
+__debug_*

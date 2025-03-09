@@ -21,17 +21,9 @@ func NewRecipeHandler(router *gin.Engine, recipeService interfaces.RecipeService
 }
 
 func (h *RecipeHandler) CreateRecipe(c *gin.Context) {
-	// Get user ID from token
-	userID, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	// Convert user ID to uint
-	uid, ok := userID.(uint)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user ID format"})
+	uid, err := AuthorizedPermission(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -42,11 +34,11 @@ func (h *RecipeHandler) CreateRecipe(c *gin.Context) {
 	}
 
 	// Set the user ID from the token
-	input.UserID = uid
+	input.UserID = *uid
 
-	recipe, err := h.recipeService.CreateRecipe(c.Request.Context(), input)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	recipe, createErr := h.recipeService.CreateRecipe(c.Request.Context(), input)
+	if createErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": createErr.Error()})
 		return
 	}
 
@@ -72,9 +64,8 @@ func (h *RecipeHandler) GetRecipe(c *gin.Context) {
 
 func (h *RecipeHandler) UpdateRecipe(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
-
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid recipe ID"})
 		return
 	}
 
@@ -92,40 +83,19 @@ func (h *RecipeHandler) UpdateRecipe(c *gin.Context) {
 		return
 	}
 
-	recipe, err := h.recipeService.GetRecipe(c.Request.Context(), uint(id))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if recipe.UserID != uid {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not allowed to update this recipe"})
-		return
-	}
-
-	var input interfaces.UpdateRecipeInput = interfaces.UpdateRecipeInput{
-		Title:       recipe.Title,
-		Description: recipe.Description,
-		Time:        recipe.Time,
-		Category:    recipe.Category,
-		ServingSize: recipe.ServingSize,
-		Images:      recipe.Images,
-		Ingredients: recipe.Ingredients,
-		Steps:       recipe.Steps,
-	}
-
+	var input interfaces.UpdateRecipeInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	updateRecipe, err := h.recipeService.UpdateRecipe(c.Request.Context(), uint(id), input)
+	recipe, err := h.recipeService.UpdateRecipe(c.Request.Context(), uint(id), uid, input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, updateRecipe)
+	c.JSON(http.StatusOK, recipe)
 }
 
 func (h *RecipeHandler) DeleteRecipe(c *gin.Context) {

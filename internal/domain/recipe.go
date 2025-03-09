@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Ingredient struct {
@@ -92,11 +94,25 @@ type Recipe struct {
 	Images      StringArray `json:"images" gorm:"type:json"`      // JSON array of image URLs
 	Ingredients Ingredients `json:"ingredients" gorm:"type:json"` // JSON array of ingredients
 	Steps       Steps       `json:"steps" gorm:"type:json"`       // JSON array of steps
-	CreatedAt   time.Time   `json:"created_at"`
-	UpdatedAt   time.Time   `json:"updated_at"`
-	DeletedAt   *time.Time  `json:"-" gorm:"default:null"`
+	CreatedAt   time.Time   `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt   time.Time   `json:"updated_at" gorm:"autoUpdateTime"`
+	Status      int         `json:"status" gorm:"column:status;default:1;"`
 }
 
 func (r *Recipe) TableName() string {
 	return "recipes"
+}
+
+// BeforeCreate is a GORM hook that runs before creating a new recipe
+func (r *Recipe) BeforeCreate(tx *gorm.DB) error {
+	now := time.Now()
+	r.CreatedAt = now
+	r.UpdatedAt = now
+	return nil
+}
+
+// BeforeUpdate is a GORM hook that runs before updating a recipe
+func (r *Recipe) BeforeUpdate(tx *gorm.DB) error {
+	r.UpdatedAt = time.Now()
+	return nil
 }

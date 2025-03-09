@@ -4,7 +4,6 @@ import (
 	"context"
 	"cookaholic/internal/domain"
 	"cookaholic/internal/interfaces"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -20,10 +19,7 @@ func (r *RecipeRepository) CreateRecipe(ctx context.Context, recipe *domain.Reci
 
 // DeleteRecipe implements interfaces.RecipeRepository.
 func (r *RecipeRepository) DeleteRecipe(ctx context.Context, id uint) error {
-	now := time.Now()
-	return r.db.WithContext(ctx).Delete(&domain.Recipe{
-		DeletedAt: &now,
-	}, id).Error
+	return r.db.WithContext(ctx).Where("id = ?", id).Update("status", 0).Error
 }
 
 // GetRecipe implements interfaces.RecipeRepository.
@@ -74,7 +70,14 @@ func (r *RecipeRepository) FilterRecipesByCondition(ctx context.Context, conditi
 
 // UpdateRecipe implements interfaces.RecipeRepository.
 func (r *RecipeRepository) UpdateRecipe(ctx context.Context, recipe *domain.Recipe) error {
-	return r.db.WithContext(ctx).Model(&domain.Recipe{}).Where("id = ?", recipe.ID).Where("user_id = ?", recipe.UserID).Updates(recipe).Error
+	// First get the existing recipe to ensure it exists and belongs to the user
+	var existingRecipe domain.Recipe
+	if err := r.db.WithContext(ctx).Where("id = ? AND user_id = ?", recipe.ID, recipe.UserID).First(&existingRecipe).Error; err != nil {
+		return err
+	}
+
+	// Update the recipe using Save to trigger hooks
+	return r.db.WithContext(ctx).Save(recipe).Error
 }
 
 func NewRecipeRepository(db *gorm.DB) interfaces.RecipeRepository {

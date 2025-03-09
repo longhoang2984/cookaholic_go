@@ -8,7 +8,7 @@ import (
 type RecipeService interface {
 	CreateRecipe(ctx context.Context, input CreateRecipeInput) (*domain.Recipe, error)
 	GetRecipe(ctx context.Context, id uint) (*domain.Recipe, error)
-	UpdateRecipe(ctx context.Context, id uint, input UpdateRecipeInput) (*domain.Recipe, error)
+	UpdateRecipe(ctx context.Context, id uint, userID uint, input UpdateRecipeInput) (*domain.Recipe, error)
 	DeleteRecipe(ctx context.Context, id uint) error
 	FilterRecipesByCondition(ctx context.Context, conditions map[string]interface{}, cursor uint, limit int) ([]domain.Recipe, uint, error)
 }

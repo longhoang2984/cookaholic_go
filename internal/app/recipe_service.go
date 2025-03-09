@@ -4,7 +4,7 @@ import (
 	"context"
 	"cookaholic/internal/domain"
 	"cookaholic/internal/interfaces"
-	"time"
+	"errors"
 )
 
 type recipeService struct {
@@ -42,37 +42,61 @@ func (s *recipeService) GetRecipe(ctx context.Context, id uint) (*domain.Recipe,
 	return s.recipeRepo.GetRecipe(ctx, id)
 }
 
-func (s *recipeService) UpdateRecipe(ctx context.Context, id uint, input interfaces.UpdateRecipeInput) (*domain.Recipe, error) {
-
-	recipe, err := s.GetRecipe(ctx, id)
+func (s *recipeService) UpdateRecipe(ctx context.Context, id uint, userID uint, input interfaces.UpdateRecipeInput) (*domain.Recipe, error) {
+	// First get the existing recipe
+	existingRecipe, err := s.recipeRepo.GetRecipe(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	updatedRecipe := &domain.Recipe{
-		ID:          recipe.ID,
-		UserID:      recipe.UserID,
-		CreatedAt:   recipe.CreatedAt,
-		UpdatedAt:   time.Now(),
-		Title:       input.Title,
-		Description: input.Description,
-		Time:        input.Time,
-		Category:    input.Category,
-		ServingSize: input.ServingSize,
-		Images:      input.Images,
-		Ingredients: input.Ingredients,
-		Steps:       input.Steps,
+	// Update the fields that are provided in the input
+	if input.Title != "" {
+		existingRecipe.Title = input.Title
+	}
+	if input.Description != "" {
+		existingRecipe.Description = input.Description
+	}
+	if input.Time != 0 {
+		existingRecipe.Time = input.Time
+	}
+	if input.Category != "" {
+		existingRecipe.Category = input.Category
+	}
+	if input.ServingSize != 0 {
+		existingRecipe.ServingSize = input.ServingSize
+	}
+	if input.Images != nil {
+		existingRecipe.Images = input.Images
+	}
+	if input.Ingredients != nil {
+		existingRecipe.Ingredients = input.Ingredients
+	}
+	if input.Steps != nil {
+		existingRecipe.Steps = input.Steps
 	}
 
-	updateErr := s.recipeRepo.UpdateRecipe(ctx, updatedRecipe)
-	if updateErr != nil {
-		return nil, updateErr
+	// Ensure we're using the correct ID and UserID
+	existingRecipe.ID = id
+	existingRecipe.UserID = userID
+
+	err = s.recipeRepo.UpdateRecipe(ctx, existingRecipe)
+	if err != nil {
+		return nil, err
 	}
 
-	return updatedRecipe, nil
+	return existingRecipe, nil
 }
 
 func (s *recipeService) DeleteRecipe(ctx context.Context, id uint) error {
+	recipe, err := s.GetRecipe(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if recipe.Status == 0 {
+		return errors.New("recipe not found")
+	}
+
 	return s.recipeRepo.DeleteRecipe(ctx, id)
 }
 
