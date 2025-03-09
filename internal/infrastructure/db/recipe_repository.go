@@ -5,6 +5,7 @@ import (
 	"cookaholic/internal/domain"
 	"cookaholic/internal/interfaces"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -18,12 +19,12 @@ func (r *RecipeRepository) CreateRecipe(ctx context.Context, recipe *domain.Reci
 }
 
 // DeleteRecipe implements interfaces.RecipeRepository.
-func (r *RecipeRepository) DeleteRecipe(ctx context.Context, id uint) error {
+func (r *RecipeRepository) DeleteRecipe(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Where("id = ?", id).Update("status", 0).Error
 }
 
 // GetRecipe implements interfaces.RecipeRepository.
-func (r *RecipeRepository) GetRecipe(ctx context.Context, id uint) (*domain.Recipe, error) {
+func (r *RecipeRepository) GetRecipe(ctx context.Context, id uuid.UUID) (*domain.Recipe, error) {
 	var recipe domain.Recipe
 	if err := r.db.WithContext(ctx).First(&recipe, id).Error; err != nil {
 		return nil, err
@@ -31,9 +32,9 @@ func (r *RecipeRepository) GetRecipe(ctx context.Context, id uint) (*domain.Reci
 	return &recipe, nil
 }
 
-func (r *RecipeRepository) FilterRecipesByCondition(ctx context.Context, conditions map[string]interface{}, cursor uint, limit int) ([]domain.Recipe, uint, error) {
+func (r *RecipeRepository) FilterRecipesByCondition(ctx context.Context, conditions map[string]interface{}, cursor uuid.UUID, limit int) ([]domain.Recipe, uuid.UUID, error) {
 	var recipes []domain.Recipe
-	var nextCursor uint
+	var nextCursor uuid.UUID
 
 	query := r.db.WithContext(ctx)
 
@@ -58,7 +59,7 @@ func (r *RecipeRepository) FilterRecipesByCondition(ctx context.Context, conditi
 	}
 
 	if err := query.Order("created_at DESC").Limit(limit).Find(&recipes).Error; err != nil {
-		return nil, 0, err
+		return nil, uuid.Nil, err
 	}
 
 	if len(recipes) > 0 {

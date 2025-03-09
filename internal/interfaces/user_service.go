@@ -3,14 +3,16 @@ package interfaces
 import (
 	"context"
 	"cookaholic/internal/domain"
+
+	"github.com/google/uuid"
 )
 
 // UserService defines the interface for user-related operations
 type UserService interface {
 	Create(ctx context.Context, input CreateUserInput) (*domain.User, error)
-	GetByID(ctx context.Context, id uint) (*domain.User, error)
-	Update(ctx context.Context, id uint, input UpdateUserInput) (*domain.User, error)
-	Delete(ctx context.Context, id uint) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error)
+	Update(ctx context.Context, id uuid.UUID, input UpdateUserInput) (*domain.User, error)
+	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, page, pageSize int) ([]domain.User, error)
 	ValidateCredentials(ctx context.Context, email, password string) (*domain.User, error)
 }

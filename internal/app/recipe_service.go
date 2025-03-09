@@ -5,6 +5,8 @@ import (
 	"cookaholic/internal/domain"
 	"cookaholic/internal/interfaces"
 	"errors"
+
+	"github.com/google/uuid"
 )
 
 type recipeService struct {
@@ -38,11 +40,11 @@ func (s *recipeService) CreateRecipe(ctx context.Context, input interfaces.Creat
 	return recipe, nil
 }
 
-func (s *recipeService) GetRecipe(ctx context.Context, id uint) (*domain.Recipe, error) {
+func (s *recipeService) GetRecipe(ctx context.Context, id uuid.UUID) (*domain.Recipe, error) {
 	return s.recipeRepo.GetRecipe(ctx, id)
 }
 
-func (s *recipeService) UpdateRecipe(ctx context.Context, id uint, userID uint, input interfaces.UpdateRecipeInput) (*domain.Recipe, error) {
+func (s *recipeService) UpdateRecipe(ctx context.Context, id uuid.UUID, userID uuid.UUID, input interfaces.UpdateRecipeInput) (*domain.Recipe, error) {
 	// First get the existing recipe
 	existingRecipe, err := s.recipeRepo.GetRecipe(ctx, id)
 	if err != nil {
@@ -87,7 +89,7 @@ func (s *recipeService) UpdateRecipe(ctx context.Context, id uint, userID uint, 
 	return existingRecipe, nil
 }
 
-func (s *recipeService) DeleteRecipe(ctx context.Context, id uint) error {
+func (s *recipeService) DeleteRecipe(ctx context.Context, id uuid.UUID) error {
 	recipe, err := s.GetRecipe(ctx, id)
 	if err != nil {
 		return err
@@ -100,6 +102,6 @@ func (s *recipeService) DeleteRecipe(ctx context.Context, id uint) error {
 	return s.recipeRepo.DeleteRecipe(ctx, id)
 }
 
-func (s *recipeService) FilterRecipesByCondition(ctx context.Context, conditions map[string]interface{}, cursor uint, limit int) ([]domain.Recipe, uint, error) {
+func (s *recipeService) FilterRecipesByCondition(ctx context.Context, conditions map[string]interface{}, cursor uuid.UUID, limit int) ([]domain.Recipe, uuid.UUID, error) {
 	return s.recipeRepo.FilterRecipesByCondition(ctx, conditions, cursor, limit)
 }

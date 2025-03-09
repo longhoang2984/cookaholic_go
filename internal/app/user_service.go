@@ -6,6 +6,7 @@ import (
 	"cookaholic/internal/interfaces"
 	"log"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -64,7 +65,7 @@ func (s *UserService) Create(ctx context.Context, input interfaces.CreateUserInp
 	return user, nil
 }
 
-func (s *UserService) GetByID(ctx context.Context, id uint) (*domain.User, error) {
+func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	user, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -75,7 +76,7 @@ func (s *UserService) GetByID(ctx context.Context, id uint) (*domain.User, error
 	return user, nil
 }
 
-func (s *UserService) Update(ctx context.Context, id uint, input interfaces.UpdateUserInput) (*domain.User, error) {
+func (s *UserService) Update(ctx context.Context, id uuid.UUID, input interfaces.UpdateUserInput) (*domain.User, error) {
 	user, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -103,7 +104,7 @@ func (s *UserService) Update(ctx context.Context, id uint, input interfaces.Upda
 	return user, nil
 }
 
-func (s *UserService) Delete(ctx context.Context, id uint) error {
+func (s *UserService) Delete(ctx context.Context, id uuid.UUID) error {
 	user, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return err

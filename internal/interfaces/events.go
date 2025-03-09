@@ -1,13 +1,17 @@
 package interfaces
 
-import "context"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 type Event interface {
 	Type() string
 }
 
 type UserCreatedEvent struct {
-	UserID uint
+	UserID uuid.UUID
 	Email  string
 }
 

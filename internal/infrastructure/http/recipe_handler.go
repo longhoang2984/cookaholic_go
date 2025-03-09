@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type RecipeHandler struct {
@@ -46,14 +47,13 @@ func (h *RecipeHandler) CreateRecipe(c *gin.Context) {
 }
 
 func (h *RecipeHandler) GetRecipe(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid recipe ID format"})
 		return
 	}
 
-	recipe, err := h.recipeService.GetRecipe(c.Request.Context(), uint(id))
+	recipe, err := h.recipeService.GetRecipe(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -63,9 +63,9 @@ func (h *RecipeHandler) GetRecipe(c *gin.Context) {
 }
 
 func (h *RecipeHandler) UpdateRecipe(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid recipe ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid recipe ID format"})
 		return
 	}
 
@@ -76,8 +76,7 @@ func (h *RecipeHandler) UpdateRecipe(c *gin.Context) {
 		return
 	}
 
-	// Convert user ID to uint
-	uid, ok := userID.(uint)
+	uid, ok := userID.(uuid.UUID)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user ID format"})
 		return
@@ -89,7 +88,7 @@ func (h *RecipeHandler) UpdateRecipe(c *gin.Context) {
 		return
 	}
 
-	recipe, err := h.recipeService.UpdateRecipe(c.Request.Context(), uint(id), uid, input)
+	recipe, err := h.recipeService.UpdateRecipe(c.Request.Context(), id, uid, input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -99,14 +98,13 @@ func (h *RecipeHandler) UpdateRecipe(c *gin.Context) {
 }
 
 func (h *RecipeHandler) DeleteRecipe(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid recipe ID format"})
 		return
 	}
 
-	err = h.recipeService.DeleteRecipe(c.Request.Context(), uint(id))
+	err = h.recipeService.DeleteRecipe(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -116,9 +114,15 @@ func (h *RecipeHandler) DeleteRecipe(c *gin.Context) {
 }
 
 func (h *RecipeHandler) FilterRecipes(c *gin.Context) {
-	cursor, err := strconv.Atoi(c.Query("cursor"))
-	if err != nil {
-		cursor = 0
+	var cursor uuid.UUID
+	var err error
+
+	if cursorStr := c.Query("cursor"); cursorStr != "" {
+		cursor, err = uuid.Parse(cursorStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid cursor format"})
+			return
+		}
 	}
 
 	limit, err := strconv.Atoi(c.Query("limit"))
@@ -128,7 +132,7 @@ func (h *RecipeHandler) FilterRecipes(c *gin.Context) {
 
 	// Initialize input with default values
 	input := interfaces.FilterRecipesInput{
-		Cursor:     uint(cursor),
+		Cursor:     cursor,
 		Limit:      limit,
 		Conditions: make(map[string]interface{}),
 	}
@@ -154,8 +158,13 @@ func (h *RecipeHandler) FilterRecipes(c *gin.Context) {
 		input.Conditions["time"] = c.Query("time")
 	}
 
-	if c.Query("user_id") != "" {
-		input.Conditions["user_id"] = c.Query("user_id")
+	if userIDStr := c.Query("user_id"); userIDStr != "" {
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+			return
+		}
+		input.Conditions["user_id"] = userID
 	}
 
 	recipes, nextCursor, err := h.recipeService.FilterRecipesByCondition(c.Request.Context(), input.Conditions, input.Cursor, input.Limit)

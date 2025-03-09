@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type ErrorResponse struct {
@@ -14,13 +15,13 @@ func NewErrorResponse(message string) *ErrorResponse {
 	}
 }
 
-func AuthorizedPermission(c *gin.Context) (*uint, *ErrorResponse) {
+func AuthorizedPermission(c *gin.Context) (*uuid.UUID, *ErrorResponse) {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		return nil, NewErrorResponse("unauthorized")
 	}
 
-	uid, ok := userID.(uint)
+	uid, ok := userID.(uuid.UUID)
 	if !ok {
 		return nil, NewErrorResponse("invalid user ID format")
 	}

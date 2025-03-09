@@ -3,18 +3,20 @@ package interfaces
 import (
 	"context"
 	"cookaholic/internal/domain"
+
+	"github.com/google/uuid"
 )
 
 type RecipeService interface {
 	CreateRecipe(ctx context.Context, input CreateRecipeInput) (*domain.Recipe, error)
-	GetRecipe(ctx context.Context, id uint) (*domain.Recipe, error)
-	UpdateRecipe(ctx context.Context, id uint, userID uint, input UpdateRecipeInput) (*domain.Recipe, error)
-	DeleteRecipe(ctx context.Context, id uint) error
-	FilterRecipesByCondition(ctx context.Context, conditions map[string]interface{}, cursor uint, limit int) ([]domain.Recipe, uint, error)
+	GetRecipe(ctx context.Context, id uuid.UUID) (*domain.Recipe, error)
+	UpdateRecipe(ctx context.Context, id uuid.UUID, userID uuid.UUID, input UpdateRecipeInput) (*domain.Recipe, error)
+	DeleteRecipe(ctx context.Context, id uuid.UUID) error
+	FilterRecipesByCondition(ctx context.Context, conditions map[string]interface{}, cursor uuid.UUID, limit int) ([]domain.Recipe, uuid.UUID, error)
 }
 
 type CreateRecipeInput struct {
-	UserID      uint                `json:"-"` // "-" means this field won't be included in JSON
+	UserID      uuid.UUID           `json:"-"` // "-" means this field won't be included in JSON
 	Title       string              `json:"title" binding:"required"`
 	Description string              `json:"description"`
 	Time        int                 `json:"time" binding:"required"`
@@ -26,7 +28,7 @@ type CreateRecipeInput struct {
 }
 
 type UpdateRecipeInput struct {
-	UserID      uint                `json:"-"` // "-" means this field won't be included in JSON
+	UserID      uuid.UUID           `json:"-"` // "-" means this field won't be included in JSON
 	Title       string              `json:"title"`
 	Description string              `json:"description"`
 	Time        int                 `json:"time"`
@@ -39,6 +41,6 @@ type UpdateRecipeInput struct {
 
 type FilterRecipesInput struct {
 	Conditions map[string]interface{} `json:"conditions" gorm:"omitempty"`
-	Cursor     uint                   `json:"cursor"`
+	Cursor     uuid.UUID              `json:"cursor"`
 	Limit      int                    `json:"limit"`
 }

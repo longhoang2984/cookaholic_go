@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type UserHandler struct {
@@ -39,18 +40,18 @@ func (h *UserHandler) Create(c *gin.Context) {
 		}
 		return
 	}
-	
+
 	c.JSON(http.StatusCreated, user)
 }
 
 func (h *UserHandler) GetByID(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
-	user, err := h.userService.GetByID(c.Request.Context(), uint(id))
+	user, err := h.userService.GetByID(c.Request.Context(), id)
 	if err != nil {
 		switch err {
 		case interfaces.ErrUserNotFound:
@@ -65,7 +66,7 @@ func (h *UserHandler) GetByID(c *gin.Context) {
 }
 
 func (h *UserHandler) Update(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
@@ -77,7 +78,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.Update(c.Request.Context(), uint(id), input)
+	user, err := h.userService.Update(c.Request.Context(), id, input)
 	if err != nil {
 		switch err {
 		case interfaces.ErrUserNotFound:
@@ -92,13 +93,13 @@ func (h *UserHandler) Update(c *gin.Context) {
 }
 
 func (h *UserHandler) Delete(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
-	if err := h.userService.Delete(c.Request.Context(), uint(id)); err != nil {
+	if err := h.userService.Delete(c.Request.Context(), id); err != nil {
 		switch err {
 		case interfaces.ErrUserNotFound:
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
