@@ -9,11 +9,11 @@ import (
 
 // Server holds all HTTP handlers and router configuration
 type Server struct {
-	router        *gin.Engine
-	app           interfaces.Application
-	userHandler   *UserHandler
-	recipeHandler *RecipeHandler
-	// Add other handlers here
+	router          *gin.Engine
+	app             interfaces.Application
+	userHandler     *UserHandler
+	recipeHandler   *RecipeHandler
+	categoryHandler *CategoryHandler
 }
 
 // NewServer creates a new Server instance
@@ -35,7 +35,7 @@ func NewServer(application interfaces.Application) *Server {
 func (s *Server) setupHandlers() {
 	s.userHandler = NewUserHandler(s.router, s.app.GetUserService())
 	s.recipeHandler = NewRecipeHandler(s.router, s.app.GetRecipeService())
-
+	s.categoryHandler = NewCategoryHandler(s.router, s.app.GetCategoryService())
 	// Public routes
 	s.router.POST("/api/users/login", s.userHandler.Login)
 	s.router.POST("/api/users/register", s.userHandler.Create)
@@ -59,6 +59,15 @@ func (s *Server) setupHandlers() {
 			recipes.PUT("/:id", s.recipeHandler.UpdateRecipe)
 			recipes.DELETE("/:id", s.recipeHandler.DeleteRecipe)
 			recipes.GET("", s.recipeHandler.FilterRecipes)
+		}
+
+		categories := protected.Group("/categories")
+		{
+			categories.POST("", s.categoryHandler.CreateCategory)
+			categories.GET("/:id", s.categoryHandler.GetCategory)
+			categories.PUT("/:id", s.categoryHandler.UpdateCategory)
+			categories.DELETE("/:id", s.categoryHandler.DeleteCategory)
+			categories.GET("", s.categoryHandler.ListCategories)
 		}
 	}
 }

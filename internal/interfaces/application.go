@@ -4,4 +4,5 @@ package interfaces
 type Application interface {
 	GetUserService() UserService
 	GetRecipeService() RecipeService
+	GetCategoryService() CategoryService
 }

@@ -26,7 +26,7 @@ func (r *RecipeRepository) DeleteRecipe(ctx context.Context, id uuid.UUID) error
 // GetRecipe implements interfaces.RecipeRepository.
 func (r *RecipeRepository) GetRecipe(ctx context.Context, id uuid.UUID) (*domain.Recipe, error) {
 	var recipe domain.Recipe
-	if err := r.db.WithContext(ctx).First(&recipe, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("status = ?", 1).First(&recipe, id).Error; err != nil {
 		return nil, err
 	}
 	return &recipe, nil
@@ -58,7 +58,7 @@ func (r *RecipeRepository) FilterRecipesByCondition(ctx context.Context, conditi
 		}
 	}
 
-	if err := query.Order("created_at DESC").Limit(limit).Find(&recipes).Error; err != nil {
+	if err := query.Where("status = ?", 1).Order("created_at DESC").Limit(limit).Find(&recipes).Error; err != nil {
 		return nil, uuid.Nil, err
 	}
 

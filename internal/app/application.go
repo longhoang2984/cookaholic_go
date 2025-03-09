@@ -22,6 +22,7 @@ type Application struct {
 	EventBus                 interfaces.EventBus
 	EmailVerificationHandler *EmailVerificationHandler
 	RecipeService            *recipeService
+	CategoryService          *categoryService
 	Server                   *http.Server
 }
 
@@ -36,6 +37,10 @@ func (app *Application) GetEmailService() interfaces.EmailService {
 
 func (app *Application) GetRecipeService() interfaces.RecipeService {
 	return app.RecipeService
+}
+
+func (app *Application) GetCategoryService() interfaces.CategoryService {
+	return app.CategoryService
 }
 
 // NewApplication creates a new Application instance
@@ -56,12 +61,14 @@ func NewApplication() (*Application, error) {
 	}
 
 	// Auto migrate schemas
-	if err := database.AutoMigrate(&domain.User{}, &domain.Recipe{}); err != nil {
+	if err := database.AutoMigrate(&domain.User{}, &domain.Recipe{}, &domain.Category{}); err != nil {
 		return nil, fmt.Errorf("failed to migrate database schema: %w", err)
 	}
 
 	// Initialize repositories
 	userRepo := db.NewUserRepository(database)
+	recipeRepo := db.NewRecipeRepository(database)
+	categoryRepo := db.NewCategoryRepository(database)
 
 	// Initialize services
 	emailService := NewEmailService()
@@ -69,8 +76,8 @@ func NewApplication() (*Application, error) {
 	userService := NewUserService(userRepo, eventBus)
 	emailVerificationHandler := NewEmailVerificationHandler(userRepo, emailService)
 
-	recipeRepo := db.NewRecipeRepository(database)
 	recipeService := NewRecipeService(recipeRepo)
+	categoryService := NewCategoryService(categoryRepo)
 
 	// Subscribe to events
 	eventBus.Subscribe("user.created", emailVerificationHandler)
@@ -83,6 +90,7 @@ func NewApplication() (*Application, error) {
 		EventBus:                 eventBus,
 		EmailVerificationHandler: emailVerificationHandler,
 		RecipeService:            recipeService,
+		CategoryService:          categoryService,
 	}
 
 	// Initialize HTTP server
