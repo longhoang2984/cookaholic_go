@@ -20,7 +20,7 @@ type CreateRecipeInput struct {
 	Title       string              `json:"title" binding:"required"`
 	Description string              `json:"description"`
 	Time        int                 `json:"time" binding:"required"`
-	Category    string              `json:"category" binding:"required"`
+	CategoryID  uuid.UUID           `json:"category_id" binding:"required"`
 	ServingSize int                 `json:"serving_size" binding:"required"`
 	Images      []string            `json:"images"`
 	Ingredients []domain.Ingredient `json:"ingredients" binding:"required"`
@@ -32,7 +32,7 @@ type UpdateRecipeInput struct {
 	Title       string              `json:"title"`
 	Description string              `json:"description"`
 	Time        int                 `json:"time"`
-	Category    string              `json:"category"`
+	CategoryID  uuid.UUID           `json:"category_id"`
 	ServingSize int                 `json:"serving_size"`
 	Images      []string            `json:"images"`
 	Ingredients []domain.Ingredient `json:"ingredients"`

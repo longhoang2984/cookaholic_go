@@ -19,37 +19,42 @@ func NewCategoryService(categoryRepo interfaces.CategoryRepository) *categorySer
 	}
 }
 
-func (s *categoryService) Create(ctx context.Context, input interfaces.CreateCategoryInput) error {
+func (s *categoryService) Create(ctx context.Context, input interfaces.CreateCategoryInput) (*domain.Category, error) {
 	category := &domain.Category{
 		Name:  input.Name,
 		Image: input.Image,
 	}
 	err := s.categoryRepo.Create(ctx, category)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return category, nil
 }
 
 func (s *categoryService) Get(ctx context.Context, id uuid.UUID) (*domain.Category, error) {
 	return s.categoryRepo.Get(ctx, id)
 }
 
-func (s *categoryService) Update(ctx context.Context, id uuid.UUID, input interfaces.UpdateCategoryInput) error {
+func (s *categoryService) Update(ctx context.Context, id uuid.UUID, input interfaces.UpdateCategoryInput) (*domain.Category, error) {
 	category, err := s.categoryRepo.Get(ctx, id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if category.Status == 0 {
-		return errors.New("category not found")
+		return nil, errors.New("category not found")
 	}
 
 	category.Name = input.Name
 	category.Image = input.Image
 
-	return s.categoryRepo.Update(ctx, category)
+	err = s.categoryRepo.Update(ctx, category)
+	if err != nil {
+		return nil, err
+	}
+
+	return category, nil
 }
 
 func (s *categoryService) Delete(ctx context.Context, id uuid.UUID) error {

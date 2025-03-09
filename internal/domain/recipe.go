@@ -90,7 +90,7 @@ type Recipe struct {
 	Title       string      `json:"title" gorm:"not null"`
 	Description string      `json:"description"`
 	Time        int         `json:"time" gorm:"not null"` // cooking time in minutes
-	Category    string      `json:"category" gorm:"not null"`
+	CategoryID  uuid.UUID   `json:"category_id" gorm:"type:char(36);not null"`
 	ServingSize int         `json:"serving_size" gorm:"not null"` // number of people
 	Images      StringArray `json:"images" gorm:"type:json"`      // JSON array of image URLs
 	Ingredients Ingredients `json:"ingredients" gorm:"type:json"` // JSON array of ingredients

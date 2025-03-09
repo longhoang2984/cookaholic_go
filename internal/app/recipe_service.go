@@ -20,12 +20,13 @@ func NewRecipeService(recipeRepo interfaces.RecipeRepository) *recipeService {
 }
 
 func (s *recipeService) CreateRecipe(ctx context.Context, input interfaces.CreateRecipeInput) (*domain.Recipe, error) {
+
 	recipe := &domain.Recipe{
 		UserID:      input.UserID,
 		Title:       input.Title,
 		Description: input.Description,
 		Time:        input.Time,
-		Category:    input.Category,
+		CategoryID:  input.CategoryID,
 		ServingSize: input.ServingSize,
 		Images:      input.Images,
 		Ingredients: input.Ingredients,
@@ -61,8 +62,8 @@ func (s *recipeService) UpdateRecipe(ctx context.Context, id uuid.UUID, userID u
 	if input.Time != 0 {
 		existingRecipe.Time = input.Time
 	}
-	if input.Category != "" {
-		existingRecipe.Category = input.Category
+	if input.CategoryID != uuid.Nil {
+		existingRecipe.CategoryID = input.CategoryID
 	}
 	if input.ServingSize != 0 {
 		existingRecipe.ServingSize = input.ServingSize

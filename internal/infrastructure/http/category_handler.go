@@ -28,12 +28,13 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 		return
 	}
 
-	if err := h.categoryService.Create(c.Request.Context(), input); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	category, createErr := h.categoryService.Create(c.Request.Context(), input)
+	if createErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": createErr.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Category created successfully"})
+	c.JSON(http.StatusCreated, category)
 }
 
 func (h *CategoryHandler) GetCategory(c *gin.Context) {
@@ -54,11 +55,13 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	if err := h.categoryService.Update(c.Request.Context(), uuid.MustParse(id), input); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	category, updateErr := h.categoryService.Update(c.Request.Context(), uuid.MustParse(id), input)
+	if updateErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": updateErr.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Category updated successfully"})
+
+	c.JSON(http.StatusOK, category)
 }
 
 func (h *CategoryHandler) DeleteCategory(c *gin.Context) {

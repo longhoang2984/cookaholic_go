@@ -8,9 +8,9 @@ import (
 )
 
 type CategoryService interface {
-	Create(ctx context.Context, category CreateCategoryInput) error
+	Create(ctx context.Context, category CreateCategoryInput) (*domain.Category, error)
 	Get(ctx context.Context, id uuid.UUID) (*domain.Category, error)
-	Update(ctx context.Context, id uuid.UUID, category UpdateCategoryInput) error
+	Update(ctx context.Context, id uuid.UUID, category UpdateCategoryInput) (*domain.Category, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, cursor uuid.UUID, limit int) ([]domain.Category, uuid.UUID, error)
 }
