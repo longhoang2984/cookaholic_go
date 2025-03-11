@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type Ingredient struct {
@@ -85,38 +84,17 @@ func (s *StringArray) Scan(value interface{}) error {
 }
 
 type Recipe struct {
-	ID          uuid.UUID   `json:"id" gorm:"type:char(36);primary_key"`
-	UserID      uuid.UUID   `json:"user_id" gorm:"type:char(36);not null"`
-	Title       string      `json:"title" gorm:"not null"`
+	ID          uuid.UUID   `json:"id"`
+	UserID      uuid.UUID   `json:"user_id"`
+	Title       string      `json:"title"`
 	Description string      `json:"description"`
-	Time        int         `json:"time" gorm:"not null"` // cooking time in minutes
-	CategoryID  uuid.UUID   `json:"category_id" gorm:"type:char(36);not null"`
-	ServingSize int         `json:"serving_size" gorm:"not null"` // number of people
-	Images      StringArray `json:"images" gorm:"type:json"`      // JSON array of image URLs
-	Ingredients Ingredients `json:"ingredients" gorm:"type:json"` // JSON array of ingredients
-	Steps       Steps       `json:"steps" gorm:"type:json"`       // JSON array of steps
-	CreatedAt   time.Time   `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt   time.Time   `json:"updated_at" gorm:"autoUpdateTime"`
-	Status      int         `json:"status" gorm:"column:status;default:1;"`
-}
-
-func (r *Recipe) TableName() string {
-	return "recipes"
-}
-
-// BeforeCreate is a GORM hook that runs before creating a new recipe
-func (r *Recipe) BeforeCreate(tx *gorm.DB) error {
-	now := time.Now()
-	if r.ID == uuid.Nil {
-		r.ID = uuid.New()
-	}
-	r.CreatedAt = now
-	r.UpdatedAt = now
-	return nil
-}
-
-// BeforeUpdate is a GORM hook that runs before updating a recipe
-func (r *Recipe) BeforeUpdate(tx *gorm.DB) error {
-	r.UpdatedAt = time.Now()
-	return nil
+	Time        int         `json:"time"` // cooking time in minutes
+	CategoryID  uuid.UUID   `json:"category_id"`
+	ServingSize int         `json:"serving_size"` // number of people
+	Images      StringArray `json:"images"`       // JSON array of image URLs
+	Ingredients Ingredients `json:"ingredients"`  // JSON array of ingredients
+	Steps       Steps       `json:"steps"`        // JSON array of steps
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
+	Status      int         `json:"status"`
 }

@@ -8,7 +8,6 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
-	"cookaholic/internal/domain"
 	"cookaholic/internal/infrastructure/db"
 	"cookaholic/internal/infrastructure/http"
 	"cookaholic/internal/interfaces"
@@ -61,7 +60,7 @@ func NewApplication() (*Application, error) {
 	}
 
 	// Auto migrate schemas
-	if err := database.AutoMigrate(&domain.User{}, &domain.Recipe{}, &domain.Category{}); err != nil {
+	if err := database.AutoMigrate(&db.UserEntity{}, &db.CategoryEntity{}, &db.RecipeEntity{}); err != nil {
 		return nil, fmt.Errorf("failed to migrate database schema: %w", err)
 	}
 
