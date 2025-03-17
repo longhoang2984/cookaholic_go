@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"cookaholic/internal/common"
 	"cookaholic/internal/domain"
 	"cookaholic/internal/interfaces"
 	"errors"
@@ -12,37 +13,30 @@ import (
 )
 
 type UserEntity struct {
-	ID            uuid.UUID `json:"id" gorm:"type:char(36);primary_key"`
-	Username      string    `json:"-" gorm:"unique;not null"`
-	Email         string    `json:"email" gorm:"unique;not null"`
-	Password      string    `json:"-" gorm:"not null"` // "-" means this field won't be included in JSON
-	FullName      string    `json:"full_name"`
-	EmailVerified bool      `json:"email_verified" gorm:"default:false"`
-	OTP           string    `json:"-" gorm:"default:null"`
-	OTPExpiresAt  time.Time `json:"-" gorm:"default:null"`
-	CreatedAt     time.Time `json:"-"`
-	UpdatedAt     time.Time `json:"-"`
-	Status        int       `json:"status" gorm:"default:1"`
+	*common.BaseEntity
+	Username      string       `json:"-" gorm:"unique;not null"`
+	Email         string       `json:"email" gorm:"unique;not null"`
+	Password      string       `json:"-" gorm:"not null"` // "-" means this field won't be included in JSON
+	FullName      string       `json:"full_name"`
+	EmailVerified bool         `json:"email_verified" gorm:"default:false"`
+	OTP           string       `json:"-" gorm:"default:null"`
+	OTPExpiresAt  time.Time    `json:"-" gorm:"default:null"`
+	Avatar        common.Image `json:"avatar" gorm:"serializer:json;type:text;default:null"`
+	Bio           string       `json:"bio" gorm:"default:null"`
 }
 
 func (UserEntity) TableName() string {
 	return "users"
 }
 
-// BeforeCreate is a GORM hook that runs before creating a new user
-func (u *UserEntity) BeforeCreate(tx *gorm.DB) error {
-	if u.ID == uuid.Nil {
-		u.ID = uuid.New()
-	}
-	now := time.Now()
-	u.CreatedAt = now
-	u.UpdatedAt = now
-	return nil
-}
-
 func (e *UserEntity) ToDomain() *domain.User {
 	return &domain.User{
-		ID:            e.ID,
+		BaseModel: &common.BaseModel{
+			ID:        e.ID,
+			CreatedAt: e.CreatedAt,
+			UpdatedAt: e.UpdatedAt,
+			Status:    e.Status,
+		},
 		Username:      e.Username,
 		Email:         e.Email,
 		Password:      e.Password,
@@ -50,16 +44,20 @@ func (e *UserEntity) ToDomain() *domain.User {
 		EmailVerified: e.EmailVerified,
 		OTP:           e.OTP,
 		OTPExpiresAt:  e.OTPExpiresAt,
-		CreatedAt:     e.CreatedAt,
-		UpdatedAt:     e.UpdatedAt,
-		Status:        e.Status,
+		Avatar:        e.Avatar,
+		Bio:           e.Bio,
 	}
 }
 
 // FromDomain converts domain.User to UserEntity
 func FromDomain(user *domain.User) *UserEntity {
 	return &UserEntity{
-		ID:            user.ID,
+		BaseEntity: &common.BaseEntity{
+			ID:        user.ID,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+			Status:    user.Status,
+		},
 		Username:      user.Username,
 		Email:         user.Email,
 		Password:      user.Password,
@@ -67,9 +65,8 @@ func FromDomain(user *domain.User) *UserEntity {
 		EmailVerified: user.EmailVerified,
 		OTP:           user.OTP,
 		OTPExpiresAt:  user.OTPExpiresAt,
-		CreatedAt:     user.CreatedAt,
-		UpdatedAt:     user.UpdatedAt,
-		Status:        user.Status,
+		Avatar:        user.Avatar,
+		Bio:           user.Bio,
 	}
 }
 
@@ -124,7 +121,9 @@ func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 
 func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Where("id = ?", id).Save(&UserEntity{
-		Status: 0,
+		BaseEntity: &common.BaseEntity{
+			Status: 0,
+		},
 	}).Error
 }
 

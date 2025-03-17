@@ -24,6 +24,7 @@ func (s *categoryService) Create(ctx context.Context, input interfaces.CreateCat
 		Name:  input.Name,
 		Image: input.Image,
 	}
+	
 	err := s.categoryRepo.Create(ctx, category)
 	if err != nil {
 		return nil, err

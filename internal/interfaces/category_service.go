@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"cookaholic/internal/common"
 	"cookaholic/internal/domain"
 
 	"github.com/google/uuid"
@@ -16,11 +17,11 @@ type CategoryService interface {
 }
 
 type CreateCategoryInput struct {
-	Name  string `json:"name" binding:"required"`
-	Image string `json:"image" binding:"required"`
+	Name  string       `json:"name" binding:"required"`
+	Image common.Image `json:"image" binding:"required"`
 }
 
 type UpdateCategoryInput struct {
 	Name  string `json:"name"`
-	Image string `json:"image"`
+	Image common.Image `json:"image"`
 }

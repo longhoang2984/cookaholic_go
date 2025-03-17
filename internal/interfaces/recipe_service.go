@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"cookaholic/internal/common"
 	"cookaholic/internal/domain"
 
 	"github.com/google/uuid"
@@ -22,7 +23,7 @@ type CreateRecipeInput struct {
 	Time        int                 `json:"time" binding:"required"`
 	CategoryID  uuid.UUID           `json:"category_id" binding:"required"`
 	ServingSize int                 `json:"serving_size" binding:"required"`
-	Images      []string            `json:"images"`
+	Images      []common.Image            `json:"images"`
 	Ingredients []domain.Ingredient `json:"ingredients" binding:"required"`
 	Steps       []domain.Step       `json:"steps" binding:"required"`
 }
@@ -34,7 +35,7 @@ type UpdateRecipeInput struct {
 	Time        int                 `json:"time"`
 	CategoryID  uuid.UUID           `json:"category_id"`
 	ServingSize int                 `json:"serving_size"`
-	Images      []string            `json:"images"`
+	Images      []common.Image            `json:"images"`
 	Ingredients []domain.Ingredient `json:"ingredients"`
 	Steps       []domain.Step       `json:"steps"`
 }

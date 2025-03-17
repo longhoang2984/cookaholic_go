@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"cookaholic/internal/common"
 	"cookaholic/internal/domain"
 	"cookaholic/internal/interfaces"
 	"time"
@@ -11,12 +12,9 @@ import (
 )
 
 type CategoryEntity struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Image     string    `json:"image"`
-	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
-	Status    int       `json:"-" gorm:"column:status;default:1;"`
+	*common.BaseEntity
+	Name  string       `json:"name"`
+	Image common.Image `json:"image" gorm:"serializer:json;type:text;default:null"`
 }
 
 func (c *CategoryEntity) TableName() string {
@@ -42,23 +40,27 @@ func (c *CategoryEntity) BeforeUpdate(tx *gorm.DB) error {
 
 func (c *CategoryEntity) ToCategoryDomain() *domain.Category {
 	return &domain.Category{
-		ID:        c.ID,
-		Name:      c.Name,
-		Image:     c.Image,
-		CreatedAt: c.CreatedAt,
-		UpdatedAt: c.UpdatedAt,
-		Status:    c.Status,
+		BaseModel: &common.BaseModel{
+			ID:        c.ID,
+			CreatedAt: c.CreatedAt,
+			UpdatedAt: c.UpdatedAt,
+			Status:    c.Status,
+		},
+		Name:  c.Name,
+		Image: c.Image,
 	}
 }
 
 func FromCategoryDomain(category *domain.Category) *CategoryEntity {
 	return &CategoryEntity{
-		ID:        category.ID,
-		Name:      category.Name,
-		Image:     category.Image,
-		CreatedAt: category.CreatedAt,
-		UpdatedAt: category.UpdatedAt,
-		Status:    category.Status,
+		BaseEntity: &common.BaseEntity{
+			ID:        category.ID,
+			CreatedAt: category.CreatedAt,
+			UpdatedAt: category.UpdatedAt,
+			Status:    category.Status,
+		},
+		Name:  category.Name,
+		Image: category.Image,
 	}
 }
 

@@ -2,9 +2,11 @@ package app
 
 import (
 	"context"
+	"cookaholic/internal/common"
 	"cookaholic/internal/domain"
 	"cookaholic/internal/interfaces"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -24,16 +26,12 @@ func NewUserService(repo interfaces.UserRepository, eventBus interfaces.EventBus
 
 func (s *UserService) Create(ctx context.Context, input interfaces.CreateUserInput) (*domain.User, error) {
 	// Check if email exists
-	if existing, err := s.repo.FindByEmail(ctx, input.Email); err != nil {
-		return nil, err
-	} else if existing != nil {
+	if existing, _ := s.repo.FindByEmail(ctx, input.Email); existing != nil {
 		return nil, interfaces.ErrEmailExists
 	}
 
 	// Check if username exists
-	if existing, err := s.repo.FindByUsername(ctx, input.Username); err != nil {
-		return nil, err
-	} else if existing != nil {
+	if existing, _ := s.repo.FindByUsername(ctx, input.Username); existing != nil {
 		return nil, interfaces.ErrUsernameExists
 	}
 
@@ -44,6 +42,12 @@ func (s *UserService) Create(ctx context.Context, input interfaces.CreateUserInp
 	}
 
 	user := &domain.User{
+		BaseModel: &common.BaseModel{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			Status:    1,
+		},
 		Username: input.Username,
 		Email:    input.Email,
 		Password: string(hashedPassword),

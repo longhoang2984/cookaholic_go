@@ -14,6 +14,7 @@ type Server struct {
 	userHandler     *UserHandler
 	recipeHandler   *RecipeHandler
 	categoryHandler *CategoryHandler
+	collectionHandler *CollectionHandler
 }
 
 // NewServer creates a new Server instance
@@ -36,6 +37,7 @@ func (s *Server) setupHandlers() {
 	s.userHandler = NewUserHandler(s.router, s.app.GetUserService())
 	s.recipeHandler = NewRecipeHandler(s.router, s.app.GetRecipeService())
 	s.categoryHandler = NewCategoryHandler(s.router, s.app.GetCategoryService())
+	s.collectionHandler = NewCollectionHandler(s.router, s.app.GetCollectionService())
 	// Public routes
 	s.router.POST("/api/users/login", s.userHandler.Login)
 	s.router.POST("/api/users/register", s.userHandler.Create)
@@ -68,6 +70,15 @@ func (s *Server) setupHandlers() {
 			categories.PUT("/:id", s.categoryHandler.UpdateCategory)
 			categories.DELETE("/:id", s.categoryHandler.DeleteCategory)
 			categories.GET("", s.categoryHandler.ListCategories)
+		}
+
+		collections := protected.Group("/collections")
+		{
+			collections.POST("", s.collectionHandler.CreateCollection)
+			collections.GET("/:id", s.collectionHandler.GetCollection)
+			collections.PUT("/:id", s.collectionHandler.UpdateCollection)
+			collections.DELETE("/:id", s.collectionHandler.DeleteCollection)
+			collections.GET("", s.collectionHandler.GetUserCollections)
 		}
 	}
 }

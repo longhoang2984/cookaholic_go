@@ -22,6 +22,7 @@ type Application struct {
 	EmailVerificationHandler *EmailVerificationHandler
 	RecipeService            *recipeService
 	CategoryService          *categoryService
+	CollectionService        *collectionService
 	Server                   *http.Server
 }
 
@@ -42,6 +43,10 @@ func (app *Application) GetCategoryService() interfaces.CategoryService {
 	return app.CategoryService
 }
 
+func (app *Application) GetCollectionService() interfaces.CollectionService {
+	return app.CollectionService
+}
+
 // NewApplication creates a new Application instance
 func NewApplication() (*Application, error) {
 	// Initialize database
@@ -60,7 +65,7 @@ func NewApplication() (*Application, error) {
 	}
 
 	// Auto migrate schemas
-	if err := database.AutoMigrate(&db.UserEntity{}, &db.CategoryEntity{}, &db.RecipeEntity{}); err != nil {
+	if err := database.AutoMigrate(&db.UserEntity{}, &db.CategoryEntity{}, &db.RecipeEntity{}, &db.CollectionEntity{}); err != nil {
 		return nil, fmt.Errorf("failed to migrate database schema: %w", err)
 	}
 
@@ -68,7 +73,7 @@ func NewApplication() (*Application, error) {
 	userRepo := db.NewUserRepository(database)
 	recipeRepo := db.NewRecipeRepository(database)
 	categoryRepo := db.NewCategoryRepository(database)
-
+	collectionRepo := db.NewCollectionRepository(database)
 	// Initialize services
 	emailService := NewEmailService()
 	eventBus := NewEventBus()
@@ -77,7 +82,7 @@ func NewApplication() (*Application, error) {
 
 	recipeService := NewRecipeService(recipeRepo)
 	categoryService := NewCategoryService(categoryRepo)
-
+	collectionService := NewCollectionService(collectionRepo)
 	// Subscribe to events
 	eventBus.Subscribe("user.created", emailVerificationHandler)
 
@@ -90,6 +95,7 @@ func NewApplication() (*Application, error) {
 		EmailVerificationHandler: emailVerificationHandler,
 		RecipeService:            recipeService,
 		CategoryService:          categoryService,
+		CollectionService:        collectionService,
 	}
 
 	// Initialize HTTP server

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"cookaholic/internal/common"
 	"time"
 
 	"github.com/google/uuid"
@@ -8,17 +9,16 @@ import (
 )
 
 type User struct {
-	ID            uuid.UUID `json:"id"`
-	Username      string    `json:"username"`
-	Email         string    `json:"email"`
-	Password      string    `json:"-"` // "-" means this field won't be included in JSON
-	FullName      string    `json:"full_name"`
-	EmailVerified bool      `json:"email_verified"`
-	OTP           string    `json:"-"`
+	*common.BaseModel
+	Username      string `json:"username"`
+	Email         string `json:"email"`
+	Password      string `json:"-"` // "-" means this field won't be included in JSON
+	FullName      string `json:"full_name"`
+	EmailVerified bool   `json:"email_verified"`
+	OTP           string `json:"-"`
 	OTPExpiresAt  time.Time `json:"-"`
-	CreatedAt     time.Time `json:"-"`
-	UpdatedAt     time.Time `json:"-"`
-	Status        int       `json:"-"`
+	Avatar        common.Image `json:"avatar"`
+	Bio           string `json:"bio"`
 }
 
 // BeforeCreate is a GORM hook that runs before creating a new user

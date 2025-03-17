@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"cookaholic/internal/common"
 	"cookaholic/internal/domain"
 	"cookaholic/internal/interfaces"
 	"database/sql/driver"
@@ -88,34 +89,20 @@ func (s *StringArrayEntity) Scan(value interface{}) error {
 }
 
 type RecipeEntity struct {
-	ID          uuid.UUID         `json:"id" gorm:"type:char(36);primary_key"`
+	*common.BaseEntity
 	UserID      uuid.UUID         `json:"user_id" gorm:"type:char(36);not null"`
 	Title       string            `json:"title" gorm:"not null"`
 	Description string            `json:"description"`
 	Time        int               `json:"time" gorm:"not null"` // cooking time in minutes
 	CategoryID  uuid.UUID         `json:"category_id" gorm:"type:char(36);not null"`
 	ServingSize int               `json:"serving_size" gorm:"not null"` // number of people
-	Images      StringArrayEntity `json:"images" gorm:"type:json"`      // JSON array of image URLs
+	Images      []common.Image `json:"images" gorm:"serializer:json;type:text"`      // JSON array of image URLs
 	Ingredients IngredientsEntity `json:"ingredients" gorm:"type:json"` // JSON array of ingredients
 	Steps       StepsEntity       `json:"steps" gorm:"type:json"`       // JSON array of steps
-	CreatedAt   time.Time         `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt   time.Time         `json:"updated_at" gorm:"autoUpdateTime"`
-	Status      int               `json:"status" gorm:"column:status;default:1;"`
 }
 
 func (r *RecipeEntity) TableName() string {
 	return "recipes"
-}
-
-// BeforeCreate is a GORM hook that runs before creating a new recipe
-func (r *RecipeEntity) BeforeCreate(tx *gorm.DB) error {
-	now := time.Now()
-	if r.ID == uuid.Nil {
-		r.ID = uuid.New()
-	}
-	r.CreatedAt = now
-	r.UpdatedAt = now
-	return nil
 }
 
 // BeforeUpdate is a GORM hook that runs before updating a recipe
@@ -140,11 +127,16 @@ func (r *RecipeEntity) ToRecipeDomain() *domain.Recipe {
 			Content: step.Content,
 		}
 	}
-	images := make([]string, len(r.Images))
+	images := make([]common.Image, len(r.Images))
 	copy(images, r.Images)
 
 	return &domain.Recipe{
-		ID:          r.ID,
+		BaseModel: &common.BaseModel{
+			ID:        r.ID,
+			CreatedAt: r.CreatedAt,
+			UpdatedAt: r.UpdatedAt,
+			Status:    r.Status,
+		},
 		UserID:      r.UserID,
 		Title:       r.Title,
 		Description: r.Description,
@@ -154,9 +146,6 @@ func (r *RecipeEntity) ToRecipeDomain() *domain.Recipe {
 		Images:      images,
 		Ingredients: ingredients,
 		Steps:       steps,
-		Status:      r.Status,
-		CreatedAt:   r.CreatedAt,
-		UpdatedAt:   r.UpdatedAt,
 	}
 }
 
@@ -178,10 +167,10 @@ func FromRecipeDomain(recipe *domain.Recipe) *RecipeEntity {
 		}
 	}
 
-	images := make([]string, len(recipe.Images))
+	images := make([]common.Image, len(recipe.Images))
+	copy(images, recipe.Images)
 
-	return &RecipeEntity{
-		ID:          recipe.ID,
+	entity := &RecipeEntity{
 		UserID:      recipe.UserID,
 		Title:       recipe.Title,
 		Description: recipe.Description,
@@ -192,6 +181,24 @@ func FromRecipeDomain(recipe *domain.Recipe) *RecipeEntity {
 		Ingredients: ingredients,
 		Steps:       steps,
 	}
+
+	if recipe.BaseModel != nil {
+		entity.BaseEntity = &common.BaseEntity{
+			ID:        recipe.ID,
+			CreatedAt: recipe.CreatedAt,
+			UpdatedAt: recipe.UpdatedAt,
+			Status:    recipe.Status,
+		}
+	} else {
+		entity.BaseEntity = &common.BaseEntity{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			Status:    1,
+		}
+	}
+
+	return entity
 }
 
 type RecipeRepository struct {
