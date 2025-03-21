@@ -10,4 +10,5 @@ var (
 	ErrOTPExpired         = errors.New("OTP has expired")
 	ErrInvalidOTP         = errors.New("invalid OTP")
 	ErrRecipeNotFound     = errors.New("recipe not found")
+	ErrCollectionNotFound = errors.New("collection not found")
 )

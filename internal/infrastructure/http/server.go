@@ -9,13 +9,14 @@ import (
 
 // Server holds all HTTP handlers and router configuration
 type Server struct {
-	router            *gin.Engine
-	app               interfaces.Application
-	userHandler       *UserHandler
-	recipeHandler     *RecipeHandler
-	categoryHandler   *CategoryHandler
-	collectionHandler *CollectionHandler
-	imageHandler      *ImageHandler
+	router                  *gin.Engine
+	app                     interfaces.Application
+	userHandler             *UserHandler
+	recipeHandler           *RecipeHandler
+	categoryHandler         *CategoryHandler
+	collectionHandler       *CollectionHandler
+	recipeCollectionHandler *RecipeCollectionHandler
+	imageHandler            *ImageHandler
 }
 
 // NewServer creates a new Server instance
@@ -39,6 +40,7 @@ func (s *Server) setupHandlers() {
 	s.recipeHandler = NewRecipeHandler(s.router, s.app.GetRecipeService())
 	s.categoryHandler = NewCategoryHandler(s.router, s.app.GetCategoryService())
 	s.collectionHandler = NewCollectionHandler(s.router, s.app.GetCollectionService())
+	s.recipeCollectionHandler = NewRecipeCollectionHandler(s.app.GetRecipeCollectionService())
 	s.imageHandler = NewImageHandler(s.router, s.app.GetImageService())
 
 	// Public routes
@@ -64,6 +66,8 @@ func (s *Server) setupHandlers() {
 			recipes.PUT("/:id", s.recipeHandler.UpdateRecipe)
 			recipes.DELETE("/:id", s.recipeHandler.DeleteRecipe)
 			recipes.GET("", s.recipeHandler.FilterRecipes)
+			recipes.GET("/:id/collections", s.recipeCollectionHandler.GetCollectionsByRecipeID)
+			recipes.GET("/:id/collections/:collectionId/check", s.recipeCollectionHandler.IsRecipeInCollection)
 		}
 
 		categories := protected.Group("/categories")
@@ -82,6 +86,9 @@ func (s *Server) setupHandlers() {
 			collections.PUT("/:id", s.collectionHandler.UpdateCollection)
 			collections.DELETE("/:id", s.collectionHandler.DeleteCollection)
 			collections.GET("", s.collectionHandler.GetUserCollections)
+			collections.POST("/:id/recipes/:recipeId", s.recipeCollectionHandler.SaveRecipeToCollection)
+			collections.DELETE("/:id/recipes/:recipeId", s.recipeCollectionHandler.RemoveRecipeFromCollection)
+			collections.GET("/:id/recipes", s.recipeCollectionHandler.GetRecipesByCollectionID)
 		}
 
 		images := protected.Group("/images")

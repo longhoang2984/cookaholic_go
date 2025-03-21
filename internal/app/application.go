@@ -24,6 +24,7 @@ type Application struct {
 	RecipeService            *recipeService
 	CategoryService          *categoryService
 	CollectionService        *collectionService
+	RecipeCollectionService  interfaces.RecipeCollectionService
 	CloudinaryService        interfaces.CloudinaryService
 	ImageService             *ImageService
 	Server                   *http.Server
@@ -50,6 +51,10 @@ func (app *Application) GetCollectionService() interfaces.CollectionService {
 	return app.CollectionService
 }
 
+func (app *Application) GetRecipeCollectionService() interfaces.RecipeCollectionService {
+	return app.RecipeCollectionService
+}
+
 func (app *Application) GetImageService() interfaces.ImageService {
 	return app.ImageService
 }
@@ -72,7 +77,7 @@ func NewApplication() (*Application, error) {
 	}
 
 	// Auto migrate schemas
-	if err := database.AutoMigrate(&db.UserEntity{}, &db.CategoryEntity{}, &db.RecipeEntity{}, &db.CollectionEntity{}); err != nil {
+	if err := database.AutoMigrate(&db.UserEntity{}, &db.CategoryEntity{}, &db.RecipeEntity{}, &db.CollectionEntity{}, &db.RecipeCollectionEntity{}); err != nil {
 		return nil, fmt.Errorf("failed to migrate database schema: %w", err)
 	}
 
@@ -81,6 +86,7 @@ func NewApplication() (*Application, error) {
 	recipeRepo := db.NewRecipeRepository(database)
 	categoryRepo := db.NewCategoryRepository(database)
 	collectionRepo := db.NewCollectionRepository(database)
+	recipeCollectionRepo := db.NewRecipeCollectionRepository(database)
 
 	// Initialize Cloudinary service
 	cloudinaryService, err := cloudinary.NewCloudinaryService()
@@ -97,6 +103,7 @@ func NewApplication() (*Application, error) {
 	recipeService := NewRecipeService(recipeRepo)
 	categoryService := NewCategoryService(categoryRepo)
 	collectionService := NewCollectionService(collectionRepo)
+	recipeCollectionService := NewRecipeCollectionService(recipeCollectionRepo, recipeRepo, collectionRepo)
 	imageService := NewImageService(cloudinaryService)
 
 	// Subscribe to events
@@ -112,6 +119,7 @@ func NewApplication() (*Application, error) {
 		RecipeService:            recipeService,
 		CategoryService:          categoryService,
 		CollectionService:        collectionService,
+		RecipeCollectionService:  recipeCollectionService,
 		CloudinaryService:        cloudinaryService,
 		ImageService:             imageService,
 	}
