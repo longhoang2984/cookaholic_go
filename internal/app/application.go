@@ -8,6 +8,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
+	"cookaholic/internal/infrastructure/cloudinary"
 	"cookaholic/internal/infrastructure/db"
 	"cookaholic/internal/infrastructure/http"
 	"cookaholic/internal/interfaces"
@@ -23,6 +24,8 @@ type Application struct {
 	RecipeService            *recipeService
 	CategoryService          *categoryService
 	CollectionService        *collectionService
+	CloudinaryService        interfaces.CloudinaryService
+	ImageService             *ImageService
 	Server                   *http.Server
 }
 
@@ -45,6 +48,10 @@ func (app *Application) GetCategoryService() interfaces.CategoryService {
 
 func (app *Application) GetCollectionService() interfaces.CollectionService {
 	return app.CollectionService
+}
+
+func (app *Application) GetImageService() interfaces.ImageService {
+	return app.ImageService
 }
 
 // NewApplication creates a new Application instance
@@ -74,6 +81,13 @@ func NewApplication() (*Application, error) {
 	recipeRepo := db.NewRecipeRepository(database)
 	categoryRepo := db.NewCategoryRepository(database)
 	collectionRepo := db.NewCollectionRepository(database)
+
+	// Initialize Cloudinary service
+	cloudinaryService, err := cloudinary.NewCloudinaryService()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize Cloudinary service: %w", err)
+	}
+
 	// Initialize services
 	emailService := NewEmailService()
 	eventBus := NewEventBus()
@@ -83,6 +97,8 @@ func NewApplication() (*Application, error) {
 	recipeService := NewRecipeService(recipeRepo)
 	categoryService := NewCategoryService(categoryRepo)
 	collectionService := NewCollectionService(collectionRepo)
+	imageService := NewImageService(cloudinaryService)
+
 	// Subscribe to events
 	eventBus.Subscribe("user.created", emailVerificationHandler)
 
@@ -96,6 +112,8 @@ func NewApplication() (*Application, error) {
 		RecipeService:            recipeService,
 		CategoryService:          categoryService,
 		CollectionService:        collectionService,
+		CloudinaryService:        cloudinaryService,
+		ImageService:             imageService,
 	}
 
 	// Initialize HTTP server

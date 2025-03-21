@@ -10,7 +10,6 @@ type Image struct {
 	URL       string `json:"url"`
 	Width     int    `json:"width"`
 	Height    int    `json:"height"`
-	CloudName string `json:"cloud_name"`
 	Extension string `json:"extension"`
 }
 
@@ -30,4 +29,28 @@ func (i *Image) Scan(value interface{}) error {
 		return errors.New("type assertion to []byte failed")
 	}
 	return json.Unmarshal(bytes, i)
+}
+
+var (
+	ErrFileTooLarge = NewCustomError(
+		errors.New("file too large"),
+		"file too large",
+		"ErrFileTooLarge",
+	)
+)
+
+func ErrFileIsNotImage(err error) *AppError {
+	return NewCustomError(
+		err,
+		"file is not image",
+		"ErrFileIsNotImage",
+	)
+}
+
+func ErrCannotSaveFile(err error) *AppError {
+	return NewCustomError(
+		err,
+		"cannot save uploaded file",
+		"ErrCannotSaveFile",
+	)
 }

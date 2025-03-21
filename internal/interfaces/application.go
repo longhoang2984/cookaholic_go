@@ -7,4 +7,5 @@ type Application interface {
 	GetRecipeService() RecipeService
 	GetCategoryService() CategoryService
 	GetCollectionService() CollectionService
+	GetImageService() ImageService
 }

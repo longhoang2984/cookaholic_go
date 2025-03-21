@@ -9,12 +9,13 @@ import (
 
 // Server holds all HTTP handlers and router configuration
 type Server struct {
-	router          *gin.Engine
-	app             interfaces.Application
-	userHandler     *UserHandler
-	recipeHandler   *RecipeHandler
-	categoryHandler *CategoryHandler
+	router            *gin.Engine
+	app               interfaces.Application
+	userHandler       *UserHandler
+	recipeHandler     *RecipeHandler
+	categoryHandler   *CategoryHandler
 	collectionHandler *CollectionHandler
+	imageHandler      *ImageHandler
 }
 
 // NewServer creates a new Server instance
@@ -38,6 +39,8 @@ func (s *Server) setupHandlers() {
 	s.recipeHandler = NewRecipeHandler(s.router, s.app.GetRecipeService())
 	s.categoryHandler = NewCategoryHandler(s.router, s.app.GetCategoryService())
 	s.collectionHandler = NewCollectionHandler(s.router, s.app.GetCollectionService())
+	s.imageHandler = NewImageHandler(s.router, s.app.GetImageService())
+
 	// Public routes
 	s.router.POST("/api/users/login", s.userHandler.Login)
 	s.router.POST("/api/users/register", s.userHandler.Create)
@@ -79,6 +82,12 @@ func (s *Server) setupHandlers() {
 			collections.PUT("/:id", s.collectionHandler.UpdateCollection)
 			collections.DELETE("/:id", s.collectionHandler.DeleteCollection)
 			collections.GET("", s.collectionHandler.GetUserCollections)
+		}
+
+		images := protected.Group("/images")
+		{
+			images.POST("/upload", s.imageHandler.UploadImage)
+			images.POST("/upload-multiple", s.imageHandler.UploadMultipleImages)
 		}
 	}
 }
