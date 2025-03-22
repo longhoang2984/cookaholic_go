@@ -17,6 +17,7 @@ type Server struct {
 	collectionHandler       *CollectionHandler
 	recipeCollectionHandler *RecipeCollectionHandler
 	recipeRatingHandler     *RecipeRatingHandler
+	userFollowerHandler     *UserFollowerHandler
 	imageHandler            *ImageHandler
 }
 
@@ -43,6 +44,7 @@ func (s *Server) setupHandlers() {
 	s.collectionHandler = NewCollectionHandler(s.router, s.app.GetCollectionService())
 	s.recipeCollectionHandler = NewRecipeCollectionHandler(s.app.GetRecipeCollectionService())
 	s.recipeRatingHandler = NewRecipeRatingHandler(s.app.GetRecipeRatingService())
+	s.userFollowerHandler = NewUserFollowerHandler(s.app.GetUserFollowerService())
 	s.imageHandler = NewImageHandler(s.router, s.app.GetImageService())
 
 	// Public routes
@@ -61,6 +63,15 @@ func (s *Server) setupHandlers() {
 			users.PUT("/:id", s.userHandler.Update)
 			users.DELETE("/:id", s.userHandler.Delete)
 			users.GET("", s.userHandler.List)
+
+			// User follower routes
+			users.POST("/:id/follow", s.userFollowerHandler.FollowUser)
+			users.DELETE("/:id/follow", s.userFollowerHandler.UnfollowUser)
+			users.GET("/:id/followers", s.userFollowerHandler.GetFollowers)
+			users.GET("/:id/following", s.userFollowerHandler.GetFollowing)
+			users.GET("/:id/followers/count", s.userFollowerHandler.GetFollowersCount)
+			users.GET("/:id/following/count", s.userFollowerHandler.GetFollowingCount)
+			users.GET("/:id/is-following", s.userFollowerHandler.IsFollowing)
 		}
 
 		recipes := protected.Group("/recipes")

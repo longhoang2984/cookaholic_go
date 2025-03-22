@@ -189,4 +189,4 @@ func (s *UserService) ResendOTP(ctx context.Context, id uuid.UUID) error {
 	}
 
 	return nil
-} 
+}

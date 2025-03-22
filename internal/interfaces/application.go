@@ -9,5 +9,6 @@ type Application interface {
 	GetCollectionService() CollectionService
 	GetRecipeCollectionService() RecipeCollectionService
 	GetRecipeRatingService() RecipeRatingService
+	GetUserFollowerService() UserFollowerService
 	GetImageService() ImageService
 }

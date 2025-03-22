@@ -30,6 +30,7 @@ type Application struct {
 	CollectionService        *collectionService
 	RecipeCollectionService  interfaces.RecipeCollectionService
 	RecipeRatingService      interfaces.RecipeRatingService
+	UserFollowerService      interfaces.UserFollowerService
 	CloudinaryService        interfaces.CloudinaryService
 	ImageService             *ImageService
 	Server                   *http.Server
@@ -65,6 +66,10 @@ func (app *Application) GetRecipeRatingService() interfaces.RecipeRatingService 
 	return app.RecipeRatingService
 }
 
+func (app *Application) GetUserFollowerService() interfaces.UserFollowerService {
+	return app.UserFollowerService
+}
+
 func (app *Application) GetImageService() interfaces.ImageService {
 	return app.ImageService
 }
@@ -87,7 +92,7 @@ func NewApplication() (*Application, error) {
 	}
 
 	// Auto migrate schemas
-	if err := database.AutoMigrate(&db.UserEntity{}, &db.CategoryEntity{}, &db.RecipeEntity{}, &db.CollectionEntity{}, &db.RecipeCollectionEntity{}, &db.RecipeRatingEntity{}); err != nil {
+	if err := database.AutoMigrate(&db.UserEntity{}, &db.CategoryEntity{}, &db.RecipeEntity{}, &db.CollectionEntity{}, &db.RecipeCollectionEntity{}, &db.RecipeRatingEntity{}, &db.UserFollowerEntity{}); err != nil {
 		return nil, fmt.Errorf("failed to migrate database schema: %w", err)
 	}
 
@@ -98,6 +103,7 @@ func NewApplication() (*Application, error) {
 	collectionRepo := db.NewCollectionRepository(database)
 	recipeCollectionRepo := db.NewRecipeCollectionRepository(database)
 	recipeRatingRepo := db.NewRecipeRatingRepository(database)
+	userFollowerRepo := db.NewUserFollowerRepository(database)
 
 	// Initialize Cloudinary service
 	cloudinaryService, err := cloudinary.NewCloudinaryService()
@@ -116,6 +122,7 @@ func NewApplication() (*Application, error) {
 	collectionService := NewCollectionService(collectionRepo)
 	recipeCollectionService := NewRecipeCollectionService(recipeCollectionRepo, recipeRepo, collectionRepo)
 	recipeRatingService := NewRecipeRatingService(recipeRatingRepo, recipeRepo)
+	userFollowerService := NewUserFollowerService(userFollowerRepo, userRepo)
 	imageService := NewImageService(cloudinaryService)
 
 	// Subscribe to events
@@ -133,6 +140,7 @@ func NewApplication() (*Application, error) {
 		CollectionService:        collectionService,
 		RecipeCollectionService:  recipeCollectionService,
 		RecipeRatingService:      recipeRatingService,
+		UserFollowerService:      userFollowerService,
 		CloudinaryService:        cloudinaryService,
 		ImageService:             imageService,
 		stopRatingCron:           make(chan bool),
