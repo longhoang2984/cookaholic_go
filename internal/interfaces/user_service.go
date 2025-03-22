@@ -17,6 +17,7 @@ type UserService interface {
 	List(ctx context.Context, page, pageSize int) ([]domain.User, error)
 	ValidateCredentials(ctx context.Context, email, password string) (*domain.User, error)
 	VerifyOTP(ctx context.Context, id uuid.UUID, otp string) error
+	ResendOTP(ctx context.Context, id uuid.UUID) error
 }
 
 // CreateUserInput defines the input for user creation

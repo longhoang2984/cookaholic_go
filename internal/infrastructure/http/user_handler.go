@@ -146,6 +146,21 @@ func (h *UserHandler) VerifyOTP(c *gin.Context) {
 	c.JSON(http.StatusOK, "Email has been verified")
 }
 
+func (h *UserHandler) ResendOTP(c *gin.Context) {
+	uid, authErr := AuthorizedPermission(c)
+	if authErr != nil {
+		c.JSON(http.StatusUnauthorized, authErr)
+		return
+	}
+
+	if err := h.userService.ResendOTP(c, *uid); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, "OTP has been sent")
+}
+
 type OTPInput struct {
 	OTP string `json:"otp" binding:"required"`
 }

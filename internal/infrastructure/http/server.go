@@ -56,6 +56,7 @@ func (s *Server) setupHandlers() {
 		users := protected.Group("/users")
 		{
 			users.POST("/email-verify", s.userHandler.VerifyOTP)
+			users.POST("/resend-otp", s.userHandler.ResendOTP)
 			users.GET("/:id", s.userHandler.GetByID)
 			users.PUT("/:id", s.userHandler.Update)
 			users.DELETE("/:id", s.userHandler.Delete)

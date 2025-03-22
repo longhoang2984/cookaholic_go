@@ -167,3 +167,26 @@ func (s *UserService) VerifyOTP(ctx context.Context, id uuid.UUID, otp string) e
 
 	return s.repo.VerifyOTP(ctx, id, otp)
 }
+
+func (s *UserService) ResendOTP(ctx context.Context, id uuid.UUID) error {
+	user, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if user == nil {
+		return interfaces.ErrUserNotFound
+	}
+
+	// Publish user created event
+	event := interfaces.UserCreatedEvent{
+		UserID: user.ID,
+		Email:  user.Email,
+	}
+	if err := s.eventBus.Publish(ctx, event); err != nil {
+		log.Printf("Failed to publish user created event: %v", err)
+		return err
+	}
+
+	return nil
+} 
