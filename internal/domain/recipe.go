@@ -64,13 +64,15 @@ func (s *Steps) Scan(value interface{}) error {
 
 type Recipe struct {
 	*common.BaseModel
-	UserID      uuid.UUID   `json:"user_id"`
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	Time        int         `json:"time"` // cooking time in minutes
-	CategoryID  uuid.UUID   `json:"category_id"`
-	ServingSize int         `json:"serving_size"` // number of people
+	UserID      uuid.UUID      `json:"user_id"`
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	Time        int            `json:"time"` // cooking time in minutes
+	CategoryID  uuid.UUID      `json:"category_id"`
+	ServingSize int            `json:"serving_size"` // number of people
 	Images      []common.Image `json:"images"`       // JSON array of image URLs
-	Ingredients Ingredients `json:"ingredients"`  // JSON array of ingredients
-	Steps       Steps       `json:"steps"`        // JSON array of steps
+	Ingredients Ingredients    `json:"ingredients"`  // JSON array of ingredients
+	Steps       Steps          `json:"steps"`        // JSON array of steps
+	RatingCount int            `json:"rating_count"` // Number of ratings
+	AvgRating   float64        `json:"avg_rating"`   // Average rating (0-5)
 }

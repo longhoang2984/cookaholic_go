@@ -1,9 +1,11 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -12,6 +14,8 @@ import (
 	"cookaholic/internal/infrastructure/db"
 	"cookaholic/internal/infrastructure/http"
 	"cookaholic/internal/interfaces"
+
+	"github.com/google/uuid"
 )
 
 // Application holds all services and dependencies
@@ -25,9 +29,11 @@ type Application struct {
 	CategoryService          *categoryService
 	CollectionService        *collectionService
 	RecipeCollectionService  interfaces.RecipeCollectionService
+	RecipeRatingService      interfaces.RecipeRatingService
 	CloudinaryService        interfaces.CloudinaryService
 	ImageService             *ImageService
 	Server                   *http.Server
+	stopRatingCron           chan bool
 }
 
 // GetUserService returns the user service
@@ -55,6 +61,10 @@ func (app *Application) GetRecipeCollectionService() interfaces.RecipeCollection
 	return app.RecipeCollectionService
 }
 
+func (app *Application) GetRecipeRatingService() interfaces.RecipeRatingService {
+	return app.RecipeRatingService
+}
+
 func (app *Application) GetImageService() interfaces.ImageService {
 	return app.ImageService
 }
@@ -77,7 +87,7 @@ func NewApplication() (*Application, error) {
 	}
 
 	// Auto migrate schemas
-	if err := database.AutoMigrate(&db.UserEntity{}, &db.CategoryEntity{}, &db.RecipeEntity{}, &db.CollectionEntity{}, &db.RecipeCollectionEntity{}); err != nil {
+	if err := database.AutoMigrate(&db.UserEntity{}, &db.CategoryEntity{}, &db.RecipeEntity{}, &db.CollectionEntity{}, &db.RecipeCollectionEntity{}, &db.RecipeRatingEntity{}); err != nil {
 		return nil, fmt.Errorf("failed to migrate database schema: %w", err)
 	}
 
@@ -87,6 +97,7 @@ func NewApplication() (*Application, error) {
 	categoryRepo := db.NewCategoryRepository(database)
 	collectionRepo := db.NewCollectionRepository(database)
 	recipeCollectionRepo := db.NewRecipeCollectionRepository(database)
+	recipeRatingRepo := db.NewRecipeRatingRepository(database)
 
 	// Initialize Cloudinary service
 	cloudinaryService, err := cloudinary.NewCloudinaryService()
@@ -104,6 +115,7 @@ func NewApplication() (*Application, error) {
 	categoryService := NewCategoryService(categoryRepo)
 	collectionService := NewCollectionService(collectionRepo)
 	recipeCollectionService := NewRecipeCollectionService(recipeCollectionRepo, recipeRepo, collectionRepo)
+	recipeRatingService := NewRecipeRatingService(recipeRatingRepo, recipeRepo)
 	imageService := NewImageService(cloudinaryService)
 
 	// Subscribe to events
@@ -120,12 +132,17 @@ func NewApplication() (*Application, error) {
 		CategoryService:          categoryService,
 		CollectionService:        collectionService,
 		RecipeCollectionService:  recipeCollectionService,
+		RecipeRatingService:      recipeRatingService,
 		CloudinaryService:        cloudinaryService,
 		ImageService:             imageService,
+		stopRatingCron:           make(chan bool),
 	}
 
 	// Initialize HTTP server
 	app.Server = http.NewServer(app)
+
+	// Start the rating update cron job
+	go app.startRatingUpdateCron()
 
 	return app, nil
 }
@@ -139,4 +156,62 @@ func (app *Application) Start() error {
 
 	log.Printf("Starting server on port %s", port)
 	return app.Server.Start(":" + port)
+}
+
+// Stop stops the application
+func (app *Application) Stop() {
+	log.Println("Stopping application...")
+	// Stop the rating update cron job
+	app.stopRatingCron <- true
+}
+
+// startRatingUpdateCron starts a goroutine that periodically updates recipe ratings
+func (app *Application) startRatingUpdateCron() {
+	ticker := time.NewTicker(6 * time.Hour)
+	defer ticker.Stop()
+
+	log.Println("Starting recipe rating update cron job...")
+
+	for {
+		select {
+		case <-ticker.C:
+			log.Println("Running recipe rating update job...")
+			app.updateAllRecipeRatings()
+		case <-app.stopRatingCron:
+			log.Println("Stopping recipe rating update cron job...")
+			return
+		}
+	}
+}
+
+// updateAllRecipeRatings updates all recipe ratings
+func (app *Application) updateAllRecipeRatings() {
+	// Get all recipes
+	var recipeIDs []string
+
+	if err := app.DB.Table("recipes").Select("id").Where("status = ?", 1).Pluck("id", &recipeIDs).Error; err != nil {
+		log.Printf("Error fetching recipe IDs: %v", err)
+		return
+	}
+
+	// Update ratings for each recipe
+	for _, idStr := range recipeIDs {
+		// Get ID as UUID
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			log.Printf("Error parsing UUID %s: %v", idStr, err)
+			continue
+		}
+
+		// Create a context for the operation
+		ctx := context.Background()
+
+		// Get the recipe rating repository
+		recipeRatingRepo := db.NewRecipeRatingRepository(app.DB)
+
+		// Update recipe rating summary
+		if err := recipeRatingRepo.UpdateRecipeRatingSummary(ctx, id); err != nil {
+			log.Printf("Error updating rating for recipe %s: %v", idStr, err)
+		}
+	}
 }

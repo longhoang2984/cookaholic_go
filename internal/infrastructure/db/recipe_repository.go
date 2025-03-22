@@ -95,20 +95,16 @@ type RecipeEntity struct {
 	Description string            `json:"description"`
 	Time        int               `json:"time" gorm:"not null"` // cooking time in minutes
 	CategoryID  uuid.UUID         `json:"category_id" gorm:"type:char(36);not null"`
-	ServingSize int               `json:"serving_size" gorm:"not null"` // number of people
-	Images      []common.Image `json:"images" gorm:"serializer:json;type:text"`      // JSON array of image URLs
-	Ingredients IngredientsEntity `json:"ingredients" gorm:"type:json"` // JSON array of ingredients
-	Steps       StepsEntity       `json:"steps" gorm:"type:json"`       // JSON array of steps
+	ServingSize int               `json:"serving_size" gorm:"not null"`            // number of people
+	Images      []common.Image    `json:"images" gorm:"serializer:json;type:text"` // JSON array of image URLs
+	Ingredients IngredientsEntity `json:"ingredients" gorm:"type:json"`            // JSON array of ingredients
+	Steps       StepsEntity       `json:"steps" gorm:"type:json"`                  // JSON array of steps
+	RatingCount int               `json:"rating_count" gorm:"default:0"`           // Number of ratings
+	AvgRating   float64           `json:"avg_rating" gorm:"default:0"`             // Average rating (0-5)
 }
 
 func (r *RecipeEntity) TableName() string {
 	return "recipes"
-}
-
-// BeforeUpdate is a GORM hook that runs before updating a recipe
-func (r *RecipeEntity) BeforeUpdate(tx *gorm.DB) error {
-	r.UpdatedAt = time.Now()
-	return nil
 }
 
 func (r *RecipeEntity) ToRecipeDomain() *domain.Recipe {
@@ -127,8 +123,10 @@ func (r *RecipeEntity) ToRecipeDomain() *domain.Recipe {
 			Content: step.Content,
 		}
 	}
-	images := make([]common.Image, len(r.Images))
-	copy(images, r.Images)
+	var images []common.Image
+	if r.Images != nil {
+		images = r.Images
+	}
 
 	return &domain.Recipe{
 		BaseModel: &common.BaseModel{
@@ -144,12 +142,19 @@ func (r *RecipeEntity) ToRecipeDomain() *domain.Recipe {
 		CategoryID:  r.CategoryID,
 		ServingSize: r.ServingSize,
 		Images:      images,
-		Ingredients: ingredients,
-		Steps:       steps,
+		Ingredients: domain.Ingredients(ingredients),
+		Steps:       domain.Steps(steps),
+		RatingCount: r.RatingCount,
+		AvgRating:   r.AvgRating,
 	}
 }
 
 func FromRecipeDomain(recipe *domain.Recipe) *RecipeEntity {
+	// If the recipe is nil, return nil
+	if recipe == nil {
+		return nil
+	}
+
 	ingredients := make([]IngredientEntity, len(recipe.Ingredients))
 	for i, ingredient := range recipe.Ingredients {
 		ingredients[i] = IngredientEntity{
@@ -167,8 +172,10 @@ func FromRecipeDomain(recipe *domain.Recipe) *RecipeEntity {
 		}
 	}
 
-	images := make([]common.Image, len(recipe.Images))
-	copy(images, recipe.Images)
+	var images []common.Image
+	if recipe.Images != nil {
+		images = recipe.Images
+	}
 
 	entity := &RecipeEntity{
 		UserID:      recipe.UserID,
@@ -180,6 +187,8 @@ func FromRecipeDomain(recipe *domain.Recipe) *RecipeEntity {
 		Images:      images,
 		Ingredients: ingredients,
 		Steps:       steps,
+		RatingCount: recipe.RatingCount,
+		AvgRating:   recipe.AvgRating,
 	}
 
 	if recipe.BaseModel != nil {

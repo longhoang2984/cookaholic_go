@@ -36,11 +36,11 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, event interfaces.
 
 	// Generate 6-digit OTP
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
-	expiresAt := time.Now().Add(15 * time.Minute)
+	expiresAt := time.Now().Add(5 * time.Minute)
 
 	// Update user with OTP
-	user.OTP = otp
-	user.OTPExpiresAt = expiresAt
+	user.OTP = &otp
+	user.OTPExpiresAt = &expiresAt
 	if err := h.userRepo.Update(ctx, user); err != nil {
 		return err
 	}

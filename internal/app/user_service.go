@@ -101,6 +101,14 @@ func (s *UserService) Update(ctx context.Context, id uuid.UUID, input interfaces
 		user.Password = string(hashedPassword)
 	}
 
+	if input.Avatar != nil {
+		user.Avatar = *input.Avatar
+	}
+
+	if input.Bio != "" {
+		user.Bio = input.Bio
+	}
+
 	if err := s.repo.Update(ctx, user); err != nil {
 		return nil, err
 	}
@@ -146,4 +154,16 @@ func (s *UserService) ValidateCredentials(ctx context.Context, email, password s
 	}
 
 	return user, nil
+}
+
+func (s *UserService) VerifyOTP(ctx context.Context, id uuid.UUID, otp string) error {
+	user, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return interfaces.ErrUserNotFound
+	}
+
+	return s.repo.VerifyOTP(ctx, id, otp)
 }

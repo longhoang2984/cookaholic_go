@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"cookaholic/internal/common"
 	"cookaholic/internal/domain"
 
 	"github.com/google/uuid"
@@ -15,6 +16,7 @@ type UserService interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, page, pageSize int) ([]domain.User, error)
 	ValidateCredentials(ctx context.Context, email, password string) (*domain.User, error)
+	VerifyOTP(ctx context.Context, id uuid.UUID, otp string) error
 }
 
 // CreateUserInput defines the input for user creation
@@ -27,6 +29,8 @@ type CreateUserInput struct {
 
 // UpdateUserInput defines the input for user updates
 type UpdateUserInput struct {
-	FullName string `json:"full_name"`
-	Password string `json:"password"`
+	FullName string        `json:"full_name"`
+	Password string        `json:"password"`
+	Avatar   *common.Image `json:"avatar"`
+	Bio      string        `json:"bio"`
 }

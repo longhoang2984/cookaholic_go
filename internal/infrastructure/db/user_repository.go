@@ -19,8 +19,8 @@ type UserEntity struct {
 	Password      string       `json:"-" gorm:"not null"` // "-" means this field won't be included in JSON
 	FullName      string       `json:"full_name"`
 	EmailVerified bool         `json:"email_verified" gorm:"default:false"`
-	OTP           string       `json:"-" gorm:"default:null"`
-	OTPExpiresAt  time.Time    `json:"-" gorm:"default:null"`
+	OTP           *string      `json:"-" gorm:"default:null"`
+	OTPExpiresAt  *time.Time   `json:"-" gorm:"default:null"`
 	Avatar        common.Image `json:"avatar" gorm:"serializer:json;type:text;default:null"`
 	Bio           string       `json:"bio" gorm:"default:null"`
 }
@@ -140,4 +140,26 @@ func (r *userRepository) List(ctx context.Context, offset, limit int) ([]domain.
 	}
 
 	return userDomains, nil
+}
+
+func (r *userRepository) VerifyOTP(ctx context.Context, id uuid.UUID, otp string) error {
+	user, err := r.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if user.OTP != nil && *user.OTP != otp {
+		return errors.New("OTP not match")
+	}
+
+	if user.OTPExpiresAt.Before(time.Now()) {
+		return errors.New("OTP has been expired")
+	}
+
+	userEntity := FromDomain(user)
+	userEntity.OTP = nil
+	userEntity.OTPExpiresAt = nil
+	userEntity.EmailVerified = true
+
+	return r.db.WithContext(ctx).Where("id = ?", id).Save(userEntity).Error
 }

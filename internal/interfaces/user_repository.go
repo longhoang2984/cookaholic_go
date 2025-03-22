@@ -15,4 +15,5 @@ type UserRepository interface {
 	Update(ctx context.Context, user *domain.User) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, offset, limit int) ([]domain.User, error)
+	VerifyOTP(ctx context.Context, id uuid.UUID, otp string) error
 }

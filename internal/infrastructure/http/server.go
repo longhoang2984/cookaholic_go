@@ -16,6 +16,7 @@ type Server struct {
 	categoryHandler         *CategoryHandler
 	collectionHandler       *CollectionHandler
 	recipeCollectionHandler *RecipeCollectionHandler
+	recipeRatingHandler     *RecipeRatingHandler
 	imageHandler            *ImageHandler
 }
 
@@ -41,6 +42,7 @@ func (s *Server) setupHandlers() {
 	s.categoryHandler = NewCategoryHandler(s.router, s.app.GetCategoryService())
 	s.collectionHandler = NewCollectionHandler(s.router, s.app.GetCollectionService())
 	s.recipeCollectionHandler = NewRecipeCollectionHandler(s.app.GetRecipeCollectionService())
+	s.recipeRatingHandler = NewRecipeRatingHandler(s.app.GetRecipeRatingService())
 	s.imageHandler = NewImageHandler(s.router, s.app.GetImageService())
 
 	// Public routes
@@ -53,6 +55,7 @@ func (s *Server) setupHandlers() {
 	{
 		users := protected.Group("/users")
 		{
+			users.POST("/email-verify", s.userHandler.VerifyOTP)
 			users.GET("/:id", s.userHandler.GetByID)
 			users.PUT("/:id", s.userHandler.Update)
 			users.DELETE("/:id", s.userHandler.Delete)
@@ -68,6 +71,9 @@ func (s *Server) setupHandlers() {
 			recipes.GET("", s.recipeHandler.FilterRecipes)
 			recipes.GET("/:id/collections", s.recipeCollectionHandler.GetCollectionsByRecipeID)
 			recipes.GET("/:id/collections/:collectionId/check", s.recipeCollectionHandler.IsRecipeInCollection)
+			recipes.GET("/:id/ratings", s.recipeRatingHandler.GetRatingsByRecipeID)
+			recipes.GET("/:id/ratings/me", s.recipeRatingHandler.GetUserRatingForRecipe)
+			recipes.POST("/:id/ratings", s.recipeRatingHandler.RateRecipe)
 		}
 
 		categories := protected.Group("/categories")
@@ -95,6 +101,12 @@ func (s *Server) setupHandlers() {
 		{
 			images.POST("/upload", s.imageHandler.UploadImage)
 			images.POST("/upload-multiple", s.imageHandler.UploadMultipleImages)
+		}
+
+		ratings := protected.Group("/ratings")
+		{
+			ratings.PUT("/:id", s.recipeRatingHandler.UpdateRating)
+			ratings.DELETE("/:id", s.recipeRatingHandler.DeleteRating)
 		}
 	}
 }

@@ -10,15 +10,15 @@ import (
 
 type User struct {
 	*common.BaseModel
-	Username      string `json:"username"`
-	Email         string `json:"email"`
-	Password      string `json:"-"` // "-" means this field won't be included in JSON
-	FullName      string `json:"full_name"`
-	EmailVerified bool   `json:"email_verified"`
-	OTP           string `json:"-"`
-	OTPExpiresAt  time.Time `json:"-"`
+	Username      string       `json:"username"`
+	Email         string       `json:"email"`
+	Password      string       `json:"-"` // "-" means this field won't be included in JSON
+	FullName      string       `json:"full_name"`
+	EmailVerified bool         `json:"email_verified"`
+	OTP           *string       `json:"-"`
+	OTPExpiresAt  *time.Time    `json:"-"`
 	Avatar        common.Image `json:"avatar"`
-	Bio           string `json:"bio"`
+	Bio           string       `json:"bio"`
 }
 
 // BeforeCreate is a GORM hook that runs before creating a new user

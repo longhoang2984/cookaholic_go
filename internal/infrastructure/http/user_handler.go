@@ -125,6 +125,31 @@ func (h *UserHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
+func (h *UserHandler) VerifyOTP(c *gin.Context) {
+	uid, authErr := AuthorizedPermission(c)
+	if authErr != nil {
+		c.JSON(http.StatusUnauthorized, authErr)
+		return
+	}
+
+	var input OTPInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.userService.VerifyOTP(c, *uid, input.OTP); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, "Email has been verified")
+}
+
+type OTPInput struct {
+	OTP string `json:"otp" binding:"required"`
+}
+
 type LoginInput struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
